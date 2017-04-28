@@ -30,6 +30,21 @@ def learn_node_features(walks, dim, window, epoch, output):
     node_model.wv.save_word2vec_format(output)
 
 
+def learn_node_features_2(walks, dim, window, epoch):
+    emb_walks = [[str(n) for n in walk] for walk in walks]
+    node_model = Word2Vec(emb_walks, size=dim, window=window, min_count=0, sg=1, workers=4, iter=epoch)
+    return node_model
+
+
+def save_node_features(nm1, nm2, nodes, dim, output):
+    with open(output, 'w') as out:
+        fv = [str(len(nodes)) + " " + str(dim) + "\n"]
+        for n in nodes:
+            nr = [n] + list(nm1[str(n)]) + list(nm2[str(n)])
+            fv.append(" ".join([str(r) for r in nr]) + "\n")
+        out.writelines(fv)
+
+
 def cluster_node_features():
     node_features = Word2Vec.load_word2vec_format("test.output")
     N = len(node_features.vocab)
@@ -42,7 +57,6 @@ def cluster_node_features():
 
 
 if __name__ == '__main__':
-    print("OK")
     nx_graph = read_graph()
 
     print("Select Algorithm")
@@ -68,7 +82,40 @@ if __name__ == '__main__':
         learn_node_features(walks=walks, dim=D, window=W, epoch=epoch, output=output)
 
     elif select == "2":
-        pass
+        P = 1
+        Q = 1
+        graph = node2vec.Graph(nx_graph, is_directed=nx.is_directed(nx_graph), p=P, q=Q)
+        graph.preprocess_transition_probs()
+        num_walks = int(input("Enter no. of walks to sample for each node: "))
+        walk_length = int(input("Enter length of each walk: "))
+        walks = graph.simulate_walks(num_walks=num_walks, walk_length=walk_length)
+
+        D = int(input("Enter dimensionality of the feature vectors: "))
+        W = int(input("Enter window size: "))
+        epoch = int(input("Enter number of iterations: "))
+        output = input("Enter output file: ")
+        learn_node_features(walks=walks, dim=D, window=W, epoch=epoch, output=output)
 
     elif select == "3":
-        pass
+        num_walks = int(input("Enter no. of walks to sample for each node: "))
+        walk_length = int(input("Enter length of each walk: "))
+        D = int(input("Enter dimensionality of the feature vectors: "))
+        W = int(input("Enter window size: "))
+        epoch = int(input("Enter number of iterations: "))
+        output = input("Enter output file: ")
+
+        P = 0.001
+        Q = 1
+        graph = node2vec.Graph(nx_graph, is_directed=nx.is_directed(nx_graph), p=P, q=Q)
+        graph.preprocess_transition_probs()
+        walks = graph.simulate_walks(num_walks=num_walks, walk_length=walk_length)
+        node_model1 = learn_node_features_2(walks=walks, dim=D/2, window=W, epoch=epoch)
+
+        P = 1
+        Q = 0.001
+        graph = node2vec.Graph(nx_graph, is_directed=nx.is_directed(nx_graph), p=P, q=Q)
+        graph.preprocess_transition_probs()
+        walks = graph.simulate_walks(num_walks=num_walks, walk_length=walk_length)
+        node_model2 = learn_node_features_2(walks=walks, dim=D/2, window=W, epoch=epoch)
+
+        save_node_features(node_model1, node_model2, nx.nodes(nx_graph), D, output)

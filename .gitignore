@@ -2,7 +2,7 @@
 BlogCatalog-dataset
 temp
 test*
-out
+out*
 __pycache__
 node2vec.pyc
 .idea
