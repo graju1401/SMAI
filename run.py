@@ -1,8 +1,6 @@
 import networkx as nx
 from gensim.models import Word2Vec
 import node2vec
-from sklearn.cluster import KMeans
-import numpy as np
 
 
 def read_graph():
@@ -43,17 +41,6 @@ def save_node_features(nm1, nm2, nodes, dim, output):
             nr = [n] + list(nm1[str(n)]) + list(nm2[str(n)])
             fv.append(" ".join([str(r) for r in nr]) + "\n")
         out.writelines(fv)
-
-
-def cluster_node_features():
-    node_features = Word2Vec.load_word2vec_format("test.output")
-    N = len(node_features.vocab)
-    X = []
-    for i in range(1, N + 1):
-        X.append(np.array(node_features[str(i)]))
-    kmeans = KMeans(n_clusters=8).fit(X)
-    for i in range(N):
-        print(i + 1, kmeans.predict(X[i].reshape(1, -1))[0])
 
 
 if __name__ == '__main__':
