@@ -3,3 +3,6 @@ BlogCatalog-dataset
 temp
 test*
 out
+__pycache__
+node2vec.pyc
+.idea
