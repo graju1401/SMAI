@@ -1,6 +1,18 @@
 import networkx as nx
 from gensim.models import Word2Vec
 import node2vec
+import numpy.random as npr
+
+
+def discard_edges(nx_graph, p):
+    if p == 0:
+        return nx_graph
+    else:
+        ebunch = nx_graph.edges()
+        npr.shuffle(ebunch)
+        for i in range(0, len(ebunch), p):
+            nx_graph.remove_edges_from([ebunch[i]])
+        return nx_graph
 
 
 def read_graph():
@@ -14,27 +26,32 @@ def read_graph():
         for edge in nx_graph.edges():
             nx_graph[edge[0]][edge[1]]['weight'] = 1
     else:
-        nx_graph = nx.read_edgelist(edgelist_file, nodetype=int, data=(('weight',float),), create_using=nx.DiGraph())
+        nx_graph = nx.read_edgelist(edgelist_file, nodetype=int, data=(('weight', float), ), create_using=nx.DiGraph())
 
     if is_undirected == "Y":
         nx_graph = nx_graph.to_undirected()
 
+    # P = int(input("Enter fraction of edges to discard (0-9): "))
+    # return discard_edges(nx_graph, P)
     return nx_graph
 
 
 def learn_node_features(walks, dim, window, epoch, output):
+
     emb_walks = [[str(n) for n in walk] for walk in walks]
     node_model = Word2Vec(emb_walks, size=dim, window=window, min_count=0, sg=1, workers=4, iter=epoch)
     node_model.wv.save_word2vec_format(output)
 
 
 def learn_node_features_2(walks, dim, window, epoch):
+
     emb_walks = [[str(n) for n in walk] for walk in walks]
     node_model = Word2Vec(emb_walks, size=dim, window=window, min_count=0, sg=1, workers=4, iter=epoch)
     return node_model
 
 
 def save_node_features(nm1, nm2, nodes, dim, output):
+
     with open(output, 'w') as out:
         fv = [str(len(nodes)) + " " + str(dim) + "\n"]
         for n in nodes:
@@ -42,11 +59,10 @@ def save_node_features(nm1, nm2, nodes, dim, output):
             fv.append(" ".join([str(r) for r in nr]) + "\n")
         out.writelines(fv)
 
-
 if __name__ == '__main__':
     nx_graph = read_graph()
 
-    print("Select Algorithm")
+    print("Select Algorithm to train")
     print("1) Node2vec")
     print("2) DeepWalk")
     print("3) LINE")
@@ -105,4 +121,4 @@ if __name__ == '__main__':
         walks = graph.simulate_walks(num_walks=num_walks, walk_length=walk_length)
         node_model2 = learn_node_features_2(walks=walks, dim=D/2, window=W, epoch=epoch)
 
-        save_node_features(node_model1, node_model2, nx.nodes(nx_graph), D, output)
+        save_node_features(nm1=node_model1, nm2=node_model2, nodes=nx.nodes(nx_graph), dim=D, output=output)

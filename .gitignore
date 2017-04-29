@@ -6,3 +6,6 @@ out*
 __pycache__
 node2vec.pyc
 .idea
+Homo_sapiens_data_labels.csv
+kmeans2.py
+convert.py
